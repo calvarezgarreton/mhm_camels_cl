@@ -66,15 +66,15 @@ gsutil rsync /mhm_chile/basins/$i/output_era5_default gs://mhm_camels_cl_results
 rm -r /mhm_chile/basins/$i
 }
 
-for i in "${ids[@]}"; do 
-   run_mhm "$i" & 
-done
-
-
-#N=14
-#(
 #for i in "${ids[@]}"; do 
-#   ((j=j%N)); ((j++==0)) && wait
 #   run_mhm "$i" & 
 #done
-#)
+
+
+N=14
+(
+for i in "${ids[@]}"; do 
+   ((j=j%N)); ((j++==0)) && wait
+   run_mhm "$i" & 
+done
+)
