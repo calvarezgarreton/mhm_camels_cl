@@ -12,6 +12,10 @@
 
 # RUN DOCKER IN THE GENERATED VM
 # docker run -t -i calvarezgarreton/mhm_ubuntu
+# git clone --recurse-submodules https://github.com/calvarezgarreton/mhm_camels_cl cag_scripts
+# cd /cag_scripts
+# chmod u+x run_mhm_parallel_GCP
+# ./run_mhm_parallel_GCP
 
 # Pendientes para creación de plantilla:
 # Todavía no logro crear la plantilla con el docker pulled. 
