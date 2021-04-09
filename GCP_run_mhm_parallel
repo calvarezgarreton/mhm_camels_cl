@@ -1,0 +1,81 @@
+#!/bin/bash
+
+# Camila Alvarez-Garreton, March 2021
+################ STEP 0 ################ 
+
+# IN GCP
+# generate VM from mhm-docker template 
+# install htop in the VM
+# toolbox apt-get install -y htop
+# toolbox
+# htop
+
+# RUN DOCKER IN THE GENERATED VM
+# docker run -t -i calvarezgarreton/mhm_ubuntu
+# git clone --recurse-submodules https://github.com/calvarezgarreton/mhm_camels_cl cag_scripts
+# cd /cag_scripts
+# chmod u+x GCP_run_mhm_parallel
+# ./GCP_run_mhm_parallel
+
+# Pendientes para creación de plantilla:
+# Todavía no logro crear la plantilla con el docker pulled. 
+# Falta intentar armar plantilla con staring running script
+# apretar la opción: Allow full access to all Cloud APIs
+
+
+# RUN mHM
+ids=($(gsutil ls gs://mhm_camels_cl | xargs -n 1 basename))
+path_ids=($(gsutil ls gs://mhm_camels_cl))
+
+echo ${ids[@]}  
+#echo ${path_ids[@]}  
+
+run_mhm(){
+
+local i=$1
+path=gs://mhm_camels_cl/$i
+
+echo ------------------------------------------------------------------------------
+echo PROCESSING BASIN $i
+echo ------------------------------------------------------------------------------
+
+# import data from google storage
+gsutil -m cp -r $path /mhm_chile/basins/
+
+# create the output folders:
+mkdir /mhm_chile/basins/$i/output_cr2met_default
+mkdir /mhm_chile/basins/$i/output_era5_default
+
+cp /mhm_git/mhm /mhm_chile/basins/$i/exe_cr2met_default/
+cd /mhm_chile/basins/$i/exe_cr2met_default/
+./mhm
+
+cp /mhm_git/mhm /mhm_chile/basins/$i/exe_era5_default/
+cd /mhm_chile/basins/$i/exe_era5_default/
+./mhm
+
+#export results to google storage
+
+echo ------------------------------------------------------------------------------
+echo WRITING RESULTS BASIN $i
+echo ------------------------------------------------------------------------------
+
+gsutil rsync /mhm_chile/basins/$i/output_cr2met_default gs://mhm_camels_cl_results/$i/output_cr2met_default
+gsutil rsync /mhm_chile/basins/$i/output_era5_default gs://mhm_camels_cl_results/$i/output_era5_default
+
+rm -r /mhm_chile/basins/$i
+}
+
+
+#for i in "${ids[@]}"; do 
+#   run_mhm "$i" & 
+#done
+
+
+N=14
+(
+for i in "${ids[@]}"; do 
+   ((j=j%N)); ((j++==0)) && wait
+   run_mhm "$i" & 
+done
+)
